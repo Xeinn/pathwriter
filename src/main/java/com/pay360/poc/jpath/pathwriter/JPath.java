@@ -20,9 +20,19 @@ public class JPath {
 	private JPath() {
 	}
 	
+	public static boolean exists(JsonNode node, String path) {
+		
+		return false;
+	}
+	
 	public static void setOrCreate(JsonNode node, String path, Object value) {
 
 		Deque<PathElement> elements = new ArrayDeque<>(JPath.parsePath(path));
+
+		if(elements.isEmpty()) {
+			
+			return;
+		}
 
 		JsonNode currentNode = node;
 		
@@ -44,6 +54,30 @@ public class JPath {
 		elements.getFirst().set(currentNode, mapper.valueToTree(value));
 	}
 
+	public static Object get(JsonNode node, String path) {
+
+		Deque<PathElement> elements = new ArrayDeque<>(JPath.parsePath(path));
+
+		if(elements.isEmpty()) {
+			
+			return null;
+		}
+
+		JsonNode currentNode = node;
+		
+		while(elements.size() > 1) {
+			JsonNode elementNode = elements.getFirst().get(currentNode);
+			if(elementNode.isMissingNode()) {
+
+				return null;
+			}
+			elements.removeFirst();
+			currentNode = elementNode;
+		}
+
+		return elements.getFirst().get(currentNode);
+	}
+	
 	public static List<PathElement> parsePath(String path) {
 
 		return Arrays.asList(path.split("\\.")).stream().map(JPath::parseElement).flatMap(List::stream).collect(Collectors.toList());
