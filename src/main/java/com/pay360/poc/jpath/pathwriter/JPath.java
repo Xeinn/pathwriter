@@ -9,8 +9,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.MissingNode;
 
 public class JPath {
 	private static final Pattern pathElementFormat = Pattern.compile("([a-zA-Z_]\\w*)((?:\\[\\d*\\])*)");
@@ -22,9 +24,18 @@ public class JPath {
 	
 	public static boolean exists(JsonNode node, String path) {
 		
-		return false;
+		try {
+
+			Object value = get(node, path);
+
+			return value != null && !(value instanceof MissingNode);
+		}
+		catch(Exception ex) {
+
+			return false;
+		}
 	}
-	
+
 	public static void setOrCreate(JsonNode node, String path, Object value) {
 
 		Deque<PathElement> elements = new ArrayDeque<>(JPath.parsePath(path));
@@ -54,6 +65,18 @@ public class JPath {
 		elements.getFirst().set(currentNode, mapper.valueToTree(value));
 	}
 
+	public static <T> T get(JsonNode rootNode, String path, Class<T> clazz) throws JsonProcessingException {
+		
+		JsonNode valueNode = (JsonNode) get(rootNode,path);
+		
+		if(valueNode == null) {
+			
+			return null;
+		}
+		
+		return mapper.treeToValue(valueNode, clazz);
+	}
+
 	public static Object get(JsonNode node, String path) {
 
 		Deque<PathElement> elements = new ArrayDeque<>(JPath.parsePath(path));
@@ -77,7 +100,7 @@ public class JPath {
 
 		return elements.getFirst().get(currentNode);
 	}
-	
+
 	public static List<PathElement> parsePath(String path) {
 
 		return Arrays.asList(path.split("\\.")).stream().map(JPath::parseElement).flatMap(List::stream).collect(Collectors.toList());
