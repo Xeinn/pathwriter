@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
@@ -69,7 +70,7 @@ public class JPath {
 		
 		JsonNode valueNode = (JsonNode) get(rootNode,path);
 		
-		if(valueNode == null) {
+		if(valueNode == null || valueNode.asToken() == JsonToken.NOT_AVAILABLE) {
 			
 			return null;
 		}
